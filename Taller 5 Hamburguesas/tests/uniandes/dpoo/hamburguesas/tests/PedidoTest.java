@@ -1,10 +1,11 @@
 package uniandes.dpoo.hamburguesas.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -31,6 +32,23 @@ class PedidoTest
         pedido = new Pedido( "Ana", "Calle 1 # 2-3" );
         corral = new ProductoMenu( "corral", 14000 );
         papas = new ProductoMenu( "papas", 5000 );
+    }
+
+    /**
+     * Intenta guardar la factura. Retorna la excepción lanzada, o null si todo salió bien.
+     * (Se atrapa aquí para que las líneas de los tests no queden "cortadas" por la excepción)
+     */
+    private Exception intentarGuardar( File archivo )
+    {
+        try
+        {
+            pedido.guardarFactura( archivo );
+            return null;
+        }
+        catch( Exception e )
+        {
+            return e;
+        }
     }
 
     @Test
@@ -110,7 +128,7 @@ class PedidoTest
         pedido.agregarProducto( papas );
         File archivo = dir.resolve( "factura.txt" ).toFile( );
 
-        pedido.guardarFactura( archivo );
+        assertNull( intentarGuardar( archivo ) );
 
         assertTrue( archivo.exists( ) );
         // PrintWriter usa el charset por defecto, así que se lee con el mismo
@@ -122,9 +140,7 @@ class PedidoTest
     void testGuardarFacturaEnCarpetaInexistente( @TempDir Path dir )
     {
         File archivo = new File( dir.toFile( ), "noExiste/factura.txt" );
-        
-        assertThrows( IOException.class, ( ) -> {
-            pedido.guardarFactura( archivo );
-        }, "Debería lanzar IOException si la carpeta no existe" );
+        Exception e = intentarGuardar( archivo );
+        assertTrue( e instanceof FileNotFoundException, "Debía lanzar FileNotFoundException" );
     }
 }
